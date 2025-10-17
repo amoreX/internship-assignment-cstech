@@ -4,16 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/lib/auth';
+import { useAuthStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import api from '@/lib/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login } = useAuthStore();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -22,40 +23,23 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        login(data.token);
-        toast({
-          title: 'Login successful',
-          description: 'Welcome back!',
-        });
-        setLocation('/dashboard');
-      } else {
-        toast({
-          title: 'Login failed',
-          description: data.message || 'Invalid email or password',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
+      const { data } = await api.post('/auth/login', { email, password });
+      login(data.token);
       toast({
-        title: 'Error',
-        description: 'An error occurred. Please try again.',
+        title: 'Login successful',
+        description: 'Welcome back!',
+      });
+      setLocation('/dashboard');
+    } catch (error: any) {
+      toast({
+        title: 'Login failed',
+        description: error.response?.data?.message || 'Invalid email or password',
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  return (
+  };  return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
