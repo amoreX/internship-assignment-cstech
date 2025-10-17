@@ -1,11 +1,11 @@
-# 🚀 MERN Stack Developer Machine Test
+#  MERN Stack Developer Test
 
 A full-stack web application built with **React (TypeScript + Tailwind CSS)** on the frontend and **Node.js (Express + MongoDB + TypeScript)** on the backend.  
 Implements JWT-based authentication and role-based access for **Admin** and **Agents**, with CRUD operations and clean state management.
 
 ---
 
-## 🧰 Tech Stack
+##  Tech Stack
 
 ### Frontend
 -  React (TypeScript)  
@@ -25,8 +25,8 @@ Implements JWT-based authentication and role-based access for **Admin** and **Ag
 
 ### 1 Clone the Repository
 ```bash
-git clone <repository_url>
-cd <project_folder>
+git clone https://github.com/amoreX/internship-assignment-cstech.git
+cd internship-assignment-cstech
 ```
 ### 2 Environment Variables
 ```bash
@@ -61,4 +61,4 @@ npm run dev
 ```
 ### 5 Use app
  Visit http:localhost:5173/
- 
+
