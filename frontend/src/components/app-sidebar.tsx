@@ -10,8 +10,8 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { useAuth } from '@/lib/auth';
-
+// import { useAuth } from '@/lib/auth';
+import { useAuthStore } from '@/lib/store';
 const menuItems = [
   {
     title: 'Agents',
@@ -36,7 +36,7 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) {
-  const { logout } = useAuth();
+  const { logout } = useAuthStore();
 
   return (
     <Sidebar>

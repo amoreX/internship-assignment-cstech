@@ -18,7 +18,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
+import api from '@/lib/api';
 
 export function AgentList() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -26,23 +27,23 @@ export function AgentList() {
   const { toast } = useToast();
 
   const { data: agents, isLoading } = useQuery<Agent[]>({
-    queryKey: ['/api/agents'],
+    queryKey: ['/agents'],
   });
 
   const handleDelete = async () => {
     if (!deleteAgentId) return;
 
     try {
-      await apiRequest('DELETE', `/api/agents/${deleteAgentId}`);
-      queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
+      await api.delete(`/agents/${deleteAgentId}`);
+      queryClient.invalidateQueries({ queryKey: ['/agents'] });
       toast({
         title: 'Agent deleted',
         description: 'The agent has been removed successfully.',
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to delete agent. Please try again.',
+        description: error.response?.data?.message || 'Failed to delete agent. Please try again.',
         variant: 'destructive',
       });
     } finally {

@@ -21,7 +21,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
+import api from '@/lib/api';
 
 interface AgentFormProps {
   open: boolean;
@@ -43,10 +44,11 @@ export function AgentForm({ open, onOpenChange }: AgentFormProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertAgent) => {
-      return await apiRequest('POST', '/api/agents', data);
+      const response = await api.post('/agents', data);
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
+      queryClient.invalidateQueries({ queryKey: ['/agents'] });
       toast({
         title: 'Agent created',
         description: 'The agent has been added successfully.',

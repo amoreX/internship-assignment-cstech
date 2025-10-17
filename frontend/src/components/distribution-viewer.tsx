@@ -32,7 +32,7 @@ interface Distribution {
 
 export function DistributionViewer() {
   const { data: distributions, isLoading } = useQuery<Distribution[]>({
-    queryKey: ['/api/distributions'],
+    queryKey: ['/distributions'],
   });
 
   if (isLoading) {

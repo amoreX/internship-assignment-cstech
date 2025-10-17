@@ -5,8 +5,8 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { AgentList } from '@/components/agent-list';
 import { CsvUpload } from '@/components/csv-upload';
 import { DistributionViewer } from '@/components/distribution-viewer';
-import { ProtectedRoute } from '@/lib/auth';
 
+import { ProtectedRoute } from '@/components/protected-route';
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState('agents');
 
