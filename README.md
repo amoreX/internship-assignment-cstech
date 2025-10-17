@@ -32,6 +32,7 @@ cd internship-assignment-cstech
 ```bash
 Download the .env file from Google Drive.
 Paste it inside the /backend folder
+Run "ren env .env" command inside backend folder to name it correctly 
 ```
 ## Note: Open two terminals, one for frontend other for backend 
 ### 3 Install Dependencies
