@@ -62,3 +62,5 @@ npm run dev
 ### 5 Use app
  Visit http:localhost:5173/
 
+ ### Dummy dataset to test CSV upload is provided in "attached_assets" folder inside cloned repository
+
