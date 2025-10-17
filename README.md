@@ -33,7 +33,7 @@ cd internship-assignment-cstech
 Download the .env file from Google Drive.
 Paste it inside the /backend folder
 ```
-
+## Note: Open two terminals, one for frontend other for backend 
 ### 3 Install Dependencies
 Backend
 ```bash
