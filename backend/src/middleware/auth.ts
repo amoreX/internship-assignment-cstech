@@ -1,7 +1,7 @@
 import { type Request } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = "your-secret-key"; // In production, use environment variable
+const JWT_SECRET = "your-secret-key"; 
 
 export interface AuthRequest extends Request {
   userId?: string;

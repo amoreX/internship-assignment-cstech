@@ -114,7 +114,6 @@ app.delete("/api/agents/:id", authenticateToken, async (req, res) => {
 // Distribution Routes
 app.post(
   "/api/distributions/upload",
-  authenticateToken,
   upload.single('file'),
   async (req, res) => {
     try {
