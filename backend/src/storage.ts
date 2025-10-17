@@ -1,25 +1,26 @@
 import { randomUUID } from 'crypto';
-import { MongoClient, Db, Collection, Document } from 'mongodb';
+import { MongoClient } from 'mongodb';
 
-const DEFAULT_URI = 'mongodb+srv://nihal:nihalokok@production.uu11zyf.mongodb.net/';
-const MONGO_URI = process.env.MONGO_URI || DEFAULT_URI;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://nihal:nihalokok@production.uu11zyf.mongodb.net/';
 const DB_NAME = process.env.MONGO_DB || 'internship';
 
-let client: MongoClient | null = null;
-let db: Db | null = null;
+let db: any;
 
-async function connectIfNeeded() {
-  if (db) return;
-  client = new MongoClient(MONGO_URI);
-  await client.connect();
-  db = client.db(DB_NAME);
+async function connect() {
+  if (!db) {
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    db = client.db(DB_NAME);
+  }
+  return db;
 }
 
-function col<T extends Document = Document>(name: string): Collection<T> {
-  if (!db) throw new Error('Database not initialized');
-  return db.collection<T>(name);
+function col(name: string) {
+  if (!db) throw new Error('Database not connected');
+  return db.collection(name);
 }
 
+// --- Interfaces ---
 export interface User {
   id: string;
   email: string;
@@ -38,9 +39,9 @@ export interface ListItem {
   id: string;
   firstName: string;
   phone: string;
-  notes: string | null;
-  agentId: string | null;
-  distributionId: string | null;
+  notes?: string | null;
+  agentId?: string | null;
+  distributionId?: string | null;
   createdAt: Date;
 }
 
@@ -51,93 +52,87 @@ export interface Distribution {
   createdAt: Date;
 }
 
+
 export const storage = {
   async init() {
-    await connectIfNeeded();
-    // Create unique indexes
-    await col<User>('users').createIndex({ email: 1 }, { unique: true });
-    await col<Agent>('agents').createIndex({ email: 1 }, { unique: true });
+    await connect();
+    await col('users').createIndex({ email: 1 }, { unique: true });
+    await col('agents').createIndex({ email: 1 }, { unique: true });
   },
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    await connectIfNeeded();
-    const doc = await col<any>('users').findOne({ email });
-    return doc ? { ...doc } : undefined;
+
+  async getUserByEmail(email: string) {
+    await connect();
+    return await col('users').findOne({ email });
   },
 
-  async createUser(data: Omit<User, 'id'>): Promise<User> {
-    await connectIfNeeded();
-    const id = randomUUID();
-    const user = { ...data, id };
+  async createUser(data: Omit<User, 'id'>) {
+    await connect();
+    const user = { ...data, id: randomUUID() };
     await col('users').insertOne(user);
     return user;
   },
 
-  async getAgents(): Promise<Agent[]> {
-    await connectIfNeeded();
-    return await col<Agent>('agents').find().toArray();
+
+  async getAgents() {
+    await connect();
+    return await col('agents').find().toArray();
   },
 
-  async getAgent(id: string): Promise<Agent | undefined> {
-    await connectIfNeeded();
-    return await col<Agent>('agents').findOne({ id }) || undefined;
+  async getAgent(id: string) {
+    await connect();
+    return await col('agents').findOne({ id });
   },
 
-  async createAgent(data: Omit<Agent, 'id' | 'createdAt'>): Promise<Agent> {
-    await connectIfNeeded();
-    const id = randomUUID();
-    const createdAt = new Date();
-    const agent = { ...data, id, createdAt } as Agent;
+  async createAgent(data: Omit<Agent, 'id' | 'createdAt'>) {
+    await connect();
+    const agent = { ...data, id: randomUUID(), createdAt: new Date() };
     await col('agents').insertOne(agent);
     return agent;
   },
 
-  async deleteAgent(id: string): Promise<void> {
-    await connectIfNeeded();
+  async deleteAgent(id: string) {
+    await connect();
     await col('agents').deleteOne({ id });
     await col('listItems').deleteMany({ agentId: id });
   },
 
-  async createListItems(items: Omit<ListItem, 'id' | 'createdAt'>[]): Promise<ListItem[]> {
-    await connectIfNeeded();
-    const createdItems: ListItem[] = items.map(i => ({
-      ...i,
-      id: randomUUID(),
-      createdAt: new Date(),
-    } as ListItem));
-    if (createdItems.length) await col('listItems').insertMany(createdItems as any[]);
-    return createdItems;
+
+  async createListItems(items: Omit<ListItem, 'id' | 'createdAt'>[]) {
+    await connect();
+    const data = items.map(i => ({ ...i, id: randomUUID(), createdAt: new Date() }));
+    if (data.length) await col('listItems').insertMany(data);
+    return data;
   },
 
-  async getListItemsByDistribution(distributionId: string): Promise<ListItem[]> {
-    await connectIfNeeded();
-    return await col<ListItem>('listItems').find({ distributionId }).toArray();
+  async getListItemsByDistribution(distributionId: string) {
+    await connect();
+    return await col('listItems').find({ distributionId }).toArray();
   },
 
-  async getListItemsByAgent(agentId: string): Promise<ListItem[]> {
-    await connectIfNeeded();
-    return await col<ListItem>('listItems').find({ agentId }).toArray();
+  async getListItemsByAgent(agentId: string) {
+    await connect();
+    return await col('listItems').find({ agentId }).toArray();
   },
 
-  async deleteListItemsByAgent(agentId: string): Promise<void> {
-    await connectIfNeeded();
+  async deleteListItemsByAgent(agentId: string) {
+    await connect();
     await col('listItems').deleteMany({ agentId });
   },
 
-  async createDistribution(data: Omit<Distribution, 'id' | 'createdAt'>): Promise<Distribution> {
-    await connectIfNeeded();
-    const id = randomUUID();
-    const createdAt = new Date();
-    const distribution = { ...data, id, createdAt } as Distribution;
+  // --- Distributions ---
+  async createDistribution(data: Omit<Distribution, 'id' | 'createdAt'>) {
+    await connect();
+    const distribution = { ...data, id: randomUUID(), createdAt: new Date() };
     await col('distributions').insertOne(distribution);
     return distribution;
   },
 
-  async getDistributions(): Promise<Distribution[]> {
-    await connectIfNeeded();
-    return await col<Distribution>('distributions').find().toArray();
+  async getDistributions() {
+    await connect();
+    return await col('distributions').find().toArray();
   },
 };
 
-// initialize connection
-storage.init().catch(err => console.error('Failed to init storage:', err));
+// Auto initialize
+storage.init().catch(console.error);
