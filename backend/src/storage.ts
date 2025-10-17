@@ -1,12 +1,17 @@
 import { randomUUID } from 'crypto';
 import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://nihal:nihalokok@production.uu11zyf.mongodb.net/';
+const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME = process.env.MONGO_DB || 'internship';
 
 let db: any;
 
 async function connect() {
+  if (!MONGO_URI) {
+    throw new Error('MONGO_URI is not defined in environment variables');
+  }
   if (!db) {
     const client = new MongoClient(MONGO_URI);
     await client.connect();

@@ -1,18 +1,25 @@
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
+import { error } from 'console';
+dotenv.config();
 
-const DEFAULT_URI = 'mongodb+srv://nihal:nihalokok@production.uu11zyf.mongodb.net/';
-const MONGO_URI = process.env.MONGO_URI || DEFAULT_URI;
+
+
+const MONGO_URI = process.env.MONGO_URI ;
 const DB_NAME = process.env.MONGO_DB || 'internship';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_EMAIL =  'admin@example.com';
+const ADMIN_PASSWORD =  'admin123';
 
 export async function injectAdmin() {
   let client: MongoClient | null = null;
 
   try {
+    if (!MONGO_URI) {
+      throw new Error('MONGO_URI is not defined in environment variables');
+    }
     console.log('🔌 Connecting to MongoDB...');
     client = new MongoClient(MONGO_URI);
     await client.connect();
