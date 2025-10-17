@@ -1,13 +1,32 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from 'crypto';
+import { MongoClient, Db, Collection, Document } from 'mongodb';
 
-// Type definitions
-interface User {
+const DEFAULT_URI = 'mongodb+srv://nihal:nihalokok@production.uu11zyf.mongodb.net/';
+const MONGO_URI = process.env.MONGO_URI || DEFAULT_URI;
+const DB_NAME = process.env.MONGO_DB || 'internship';
+
+let client: MongoClient | null = null;
+let db: Db | null = null;
+
+async function connectIfNeeded() {
+  if (db) return;
+  client = new MongoClient(MONGO_URI);
+  await client.connect();
+  db = client.db(DB_NAME);
+}
+
+function col<T extends Document = Document>(name: string): Collection<T> {
+  if (!db) throw new Error('Database not initialized');
+  return db.collection<T>(name);
+}
+
+export interface User {
   id: string;
   email: string;
   password: string;
 }
 
-interface Agent {
+export interface Agent {
   id: string;
   name: string;
   email: string;
@@ -15,7 +34,7 @@ interface Agent {
   createdAt: Date;
 }
 
-interface ListItem {
+export interface ListItem {
   id: string;
   firstName: string;
   phone: string;
@@ -25,106 +44,100 @@ interface ListItem {
   createdAt: Date;
 }
 
-interface Distribution {
+export interface Distribution {
   id: string;
   fileName: string;
   totalItems: number;
   createdAt: Date;
 }
 
-// Storage class implementation
-export class Storage {
-  private users: Map<string, User>;
-  private agents: Map<string, Agent>;
-  private listItems: Map<string, ListItem>;
-  private distributions: Map<string, Distribution>;
+export const storage = {
+  async init() {
+    await connectIfNeeded();
+    // Create unique indexes
+    await col<User>('users').createIndex({ email: 1 }, { unique: true });
+    await col<Agent>('agents').createIndex({ email: 1 }, { unique: true });
+  },
 
-  constructor() {
-    this.users = new Map();
-    this.agents = new Map();
-    this.listItems = new Map();
-    this.distributions = new Map();
-  }
-
-  // User operations
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
-  }
+    await connectIfNeeded();
+    const doc = await col<any>('users').findOne({ email });
+    return doc ? { ...doc } : undefined;
+  },
 
   async createUser(data: Omit<User, 'id'>): Promise<User> {
+    await connectIfNeeded();
     const id = randomUUID();
     const user = { ...data, id };
-    this.users.set(id, user);
+    await col('users').insertOne(user);
     return user;
-  }
+  },
 
-  // Agent operations
   async getAgents(): Promise<Agent[]> {
-    return Array.from(this.agents.values());
-  }
+    await connectIfNeeded();
+    return await col<Agent>('agents').find().toArray();
+  },
 
   async getAgent(id: string): Promise<Agent | undefined> {
-    return this.agents.get(id);
-  }
+    await connectIfNeeded();
+    return await col<Agent>('agents').findOne({ id }) || undefined;
+  },
 
   async createAgent(data: Omit<Agent, 'id' | 'createdAt'>): Promise<Agent> {
+    await connectIfNeeded();
     const id = randomUUID();
     const createdAt = new Date();
-    const agent = { ...data, id, createdAt };
-    this.agents.set(id, agent);
+    const agent = { ...data, id, createdAt } as Agent;
+    await col('agents').insertOne(agent);
     return agent;
-  }
+  },
 
   async deleteAgent(id: string): Promise<void> {
-    this.agents.delete(id);
-    await this.deleteListItemsByAgent(id);
-  }
+    await connectIfNeeded();
+    await col('agents').deleteOne({ id });
+    await col('listItems').deleteMany({ agentId: id });
+  },
 
-  // List item operations
   async createListItems(items: Omit<ListItem, 'id' | 'createdAt'>[]): Promise<ListItem[]> {
-    const createdItems: ListItem[] = [];
-    
-    for (const item of items) {
-      const id = randomUUID();
-      const createdAt = new Date();
-      const listItem = { ...item, id, createdAt };
-      this.listItems.set(id, listItem);
-      createdItems.push(listItem);
-    }
-    
+    await connectIfNeeded();
+    const createdItems: ListItem[] = items.map(i => ({
+      ...i,
+      id: randomUUID(),
+      createdAt: new Date(),
+    } as ListItem));
+    if (createdItems.length) await col('listItems').insertMany(createdItems as any[]);
     return createdItems;
-  }
+  },
 
   async getListItemsByDistribution(distributionId: string): Promise<ListItem[]> {
-    return Array.from(this.listItems.values())
-      .filter(item => item.distributionId === distributionId);
-  }
+    await connectIfNeeded();
+    return await col<ListItem>('listItems').find({ distributionId }).toArray();
+  },
 
   async getListItemsByAgent(agentId: string): Promise<ListItem[]> {
-    return Array.from(this.listItems.values())
-      .filter(item => item.agentId === agentId);
-  }
+    await connectIfNeeded();
+    return await col<ListItem>('listItems').find({ agentId }).toArray();
+  },
 
   async deleteListItemsByAgent(agentId: string): Promise<void> {
-    const itemsToDelete = Array.from(this.listItems.entries())
-      .filter(([, item]) => item.agentId === agentId)
-      .map(([id]) => id);
-    
-    itemsToDelete.forEach(id => this.listItems.delete(id));
-  }
+    await connectIfNeeded();
+    await col('listItems').deleteMany({ agentId });
+  },
 
-  // Distribution operations
   async createDistribution(data: Omit<Distribution, 'id' | 'createdAt'>): Promise<Distribution> {
+    await connectIfNeeded();
     const id = randomUUID();
     const createdAt = new Date();
-    const distribution = { ...data, id, createdAt };
-    this.distributions.set(id, distribution);
+    const distribution = { ...data, id, createdAt } as Distribution;
+    await col('distributions').insertOne(distribution);
     return distribution;
-  }
+  },
 
   async getDistributions(): Promise<Distribution[]> {
-    return Array.from(this.distributions.values());
-  }
-}
+    await connectIfNeeded();
+    return await col<Distribution>('distributions').find().toArray();
+  },
+};
 
-export const storage = new Storage();
+// initialize connection
+storage.init().catch(err => console.error('Failed to init storage:', err));

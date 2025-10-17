@@ -1,22 +1,19 @@
 import express from 'express';
 import cors from 'cors';
-// (Remaining logic moved to controllers/services)
-import { storage } from './storage';
-import { seedDatabase } from './seed-data';
+
 import authRoutes from './routes/auth';
 import agentRoutes from './routes/agents';
 import distributionRoutes from './routes/distributions';
-
+import { injectAdmin } from './utils/inject-admin';
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+injectAdmin();
 // (File uploads, validation and business logic are handled in controllers/services)
 
-// Initialize database with seed data
-seedDatabase();
+// Database connection is initialized by storage (MongoDB)
 
 // Mount refactored routers
 app.use('/api/auth', authRoutes);
