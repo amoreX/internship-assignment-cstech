@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { insertAgentSchema, type InsertAgent } from '@shared/schema';
+import { insertAgentSchema, type InsertAgent } from '@/schemas';
 import {
   Dialog,
   DialogContent,

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Agent } from '@shared/schema';
+import { Agent } from '@/schemas/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
